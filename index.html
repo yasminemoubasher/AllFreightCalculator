@@ -1,0 +1,643 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>All Freight Calculator</title>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Nunito:wght@300;400;600;700;800&display=swap');
+:root{--white:#FFFFFF;--light:#A7C6FF;--navy:#150F4D;--blue:#000AF9;--bg:#F4F7FF;--border:#DDE6FF;--muted:#7A85C0}
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+body{font-family:'Century Gothic','CenturyGothic','AppleGothic','Nunito',sans-serif;background:var(--bg);color:var(--navy);min-height:100vh}
+body::before{content:'';position:fixed;inset:0;background-image:radial-gradient(circle,rgba(0,10,249,.06) 1px,transparent 1px);background-size:28px 28px;pointer-events:none;z-index:0}
+.pw{position:relative;z-index:1;max-width:900px;margin:0 auto;padding:52px 20px 80px}
+/* ── header ── */
+header{text-align:center;margin-bottom:44px}
+.chip{display:inline-flex;align-items:center;gap:7px;background:var(--navy);color:var(--light);font-size:10px;font-weight:700;letter-spacing:.18em;text-transform:uppercase;padding:6px 14px;border-radius:100px;margin-bottom:18px}
+.chip span{width:6px;height:6px;border-radius:50%;background:var(--blue);display:inline-block}
+h1{font-size:clamp(1.8rem,4.5vw,2.8rem);font-weight:800;letter-spacing:-.02em;color:var(--blue);line-height:1.15}
+.sub{margin-top:10px;font-size:13px;color:var(--muted);letter-spacing:.04em;transition:opacity .3s,height .3s}
+.sub.gone{opacity:0;pointer-events:none;height:0;margin:0;overflow:hidden}
+/* ── mode selector ── */
+.ms{display:grid;grid-template-columns:repeat(3,1fr);gap:14px;margin-bottom:36px}
+@media(max-width:600px){.ms{grid-template-columns:1fr}}
+.mb{display:flex;flex-direction:column;align-items:center;gap:10px;padding:26px 16px 22px;background:var(--white);border:2px solid var(--border);border-radius:18px;cursor:pointer;transition:all .25s;position:relative;overflow:hidden;box-shadow:0 2px 12px rgba(21,15,77,.05)}
+.mb::after{content:'';position:absolute;bottom:0;left:0;right:0;height:3px;background:linear-gradient(90deg,var(--blue),var(--light));transform:scaleX(0);transition:transform .25s}
+.mb:hover{border-color:var(--light);box-shadow:0 6px 24px rgba(0,10,249,.12);transform:translateY(-3px)}
+.mb:hover::after{transform:scaleX(1)}
+.mi{width:52px;height:52px;border-radius:14px;background:#edf1ff;display:flex;align-items:center;justify-content:center;transition:background .25s,transform .25s}
+.mb:hover .mi{background:#dde6ff;transform:scale(1.08)}
+.mi svg{width:26px;height:26px;stroke:var(--blue)}
+.mtl{font-size:14px;font-weight:800;color:var(--navy)}
+.mds{font-size:11px;color:var(--muted);text-align:center;line-height:1.6}
+.mar{width:28px;height:28px;border-radius:50%;background:var(--bg);border:1.5px solid var(--border);display:flex;align-items:center;justify-content:center;transition:background .25s,transform .25s}
+.mb:hover .mar{background:var(--blue);border-color:var(--blue);transform:translateX(2px)}
+.mar svg{width:13px;height:13px;stroke:var(--muted)}
+.mb:hover .mar svg{stroke:white}
+/* ── panels ── */
+.panel{display:none}
+.panel.on{display:block;animation:pIn .35s cubic-bezier(.22,1,.36,1)}
+@keyframes pIn{from{opacity:0;transform:translateY(16px)}to{opacity:1;transform:translateY(0)}}
+/* ── card ── */
+.card{background:var(--white);border:1.5px solid var(--border);border-radius:20px;padding:36px;box-shadow:0 4px 28px rgba(21,15,77,.08)}
+@media(max-width:500px){.card{padding:22px 16px}}
+.chead{display:flex;align-items:flex-start;gap:14px;margin-bottom:10px}
+.cicon{width:46px;height:46px;border-radius:13px;background:linear-gradient(135deg,var(--navy),#2e2a80);display:flex;align-items:center;justify-content:center;flex-shrink:0}
+.cicon svg{width:22px;height:22px;stroke:var(--light)}
+.ctitle{font-size:18px;font-weight:800;color:var(--navy)}
+.csub{font-size:12px;color:var(--muted);margin-top:3px}
+.fpill{display:inline-block;background:#edf1ff;border:1px solid #c5d2ff;color:var(--blue);font-size:12px;font-weight:700;padding:6px 16px;border-radius:100px;margin:16px 0 26px}
+/* ── standard inputs ── */
+.igrid{display:grid;gap:16px;margin-bottom:8px}
+.fcols{grid-template-columns:repeat(2,1fr)}
+@media(min-width:480px){.fcols{grid-template-columns:repeat(4,1fr)}}
+.fld{display:flex;flex-direction:column;gap:7px}
+label{font-size:10.5px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:var(--navy)}
+input[type=number],input[type=text]{width:100%;background:var(--bg);border:1.5px solid var(--border);border-radius:10px;padding:12px 14px;font-family:'Century Gothic','CenturyGothic','Nunito',sans-serif;font-size:15px;font-weight:600;color:var(--navy);outline:none;transition:border-color .2s,box-shadow .2s,background .2s;-moz-appearance:textfield}
+input[type=number]::-webkit-outer-spin-button,input[type=number]::-webkit-inner-spin-button{-webkit-appearance:none}
+input::placeholder{font-weight:400;color:#b8c5e8}
+input:focus{border-color:var(--blue);background:#fff;box-shadow:0 0 0 3px rgba(0,10,249,.1)}
+/* ── RED INVALID STATE — applied via JS ── */
+input.invalid{
+  border:2px solid #e53e3e !important;
+  background:#fff0f0 !important;
+  box-shadow:0 0 0 3px rgba(229,62,62,.18) !important;
+  color:#c0392b !important;
+}
+.errmsg{font-size:10.5px;color:#e53e3e;font-weight:700;margin-top:3px;display:none}
+.errmsg.show{display:block}
+/* ── weight list ── */
+.whead{display:flex;align-items:center;justify-content:space-between;margin-bottom:16px}
+.wbadge{font-size:11px;font-weight:700;color:var(--blue);background:#edf1ff;padding:3px 10px;border-radius:100px}
+.wlist{display:flex;flex-direction:column;gap:10px;margin-bottom:16px;max-height:400px;overflow-y:auto;padding-right:4px}
+.wlist::-webkit-scrollbar{width:4px}
+.wlist::-webkit-scrollbar-thumb{background:var(--light);border-radius:4px}
+.wrow{display:flex;align-items:center;gap:10px;animation:rIn .22s ease}
+@keyframes rIn{from{opacity:0;transform:translateX(-8px)}to{opacity:1;transform:translateX(0)}}
+.widx{font-size:11px;font-weight:700;color:var(--light);width:26px;text-align:right;flex-shrink:0}
+.wrow input[type=number]{flex:1;min-width:0;padding:10px 12px;font-size:14px}
+.wrow .errmsg{font-size:10px;color:#e53e3e;font-weight:700;display:none;margin-top:2px;flex-basis:100%;padding-left:36px}
+.wrow .errmsg.show{display:block}
+.wrow{flex-wrap:wrap}
+.brem{width:32px;height:32px;border-radius:8px;border:1.5px solid #fcd0d0;background:#fff5f5;color:#e05555;font-size:18px;cursor:pointer;display:flex;align-items:center;justify-content:center;flex-shrink:0;transition:background .2s,transform .15s}
+.brem:hover{background:#ffe0e0;transform:scale(1.1)}
+.brem:disabled{opacity:.3;cursor:not-allowed;transform:none}
+.badd{display:inline-flex;align-items:center;gap:7px;font-family:'Century Gothic','CenturyGothic','Nunito',sans-serif;font-size:12.5px;font-weight:700;color:var(--blue);background:#edf1ff;border:1.5px dashed #c5d2ff;border-radius:10px;padding:9px 16px;cursor:pointer;transition:background .2s,transform .15s}
+.badd:hover{background:#dde6ff;transform:translateY(-1px)}
+.hdiv{height:1px;background:var(--border);margin:28px 0 24px}
+/* ── calc button ── */
+.bcalc{display:flex;align-items:center;justify-content:center;gap:10px;width:100%;padding:16px 24px;font-family:'Century Gothic','CenturyGothic','Nunito',sans-serif;font-size:14px;font-weight:800;letter-spacing:.07em;text-transform:uppercase;color:var(--white);background:var(--navy);border:none;border-radius:12px;cursor:pointer;position:relative;overflow:hidden;transition:transform .2s,box-shadow .2s,background .2s}
+.bcalc::after{content:'';position:absolute;inset:0;background:linear-gradient(135deg,rgba(255,255,255,.1),transparent 60%);pointer-events:none}
+.bcalc:hover{background:var(--blue);transform:translateY(-2px);box-shadow:0 8px 28px rgba(0,10,249,.3)}
+.bcalc svg{width:16px;height:16px;stroke:var(--light)}
+/* ── result box ── */
+.rbox{margin-top:20px;border-radius:14px;padding:22px 26px;background:linear-gradient(135deg,var(--navy),#1e1775);display:flex;align-items:center;justify-content:space-between;gap:16px;opacity:0;transform:translateY(8px);transition:opacity .35s,transform .35s;pointer-events:none}
+.rbox.show{opacity:1;transform:translateY(0);pointer-events:auto}
+.rlbl{font-size:11px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:var(--light);opacity:.8;margin-bottom:6px}
+.rval{font-size:clamp(1.8rem,4vw,2.6rem);font-weight:800;color:var(--white);letter-spacing:-.02em;line-height:1}
+.runit{font-size:12px;color:var(--light);margin-top:5px;opacity:.65}
+.rchk{width:44px;height:44px;border-radius:50%;background:rgba(167,198,255,.15);border:2px solid rgba(167,198,255,.3);display:flex;align-items:center;justify-content:center;flex-shrink:0}
+.rchk svg{width:22px;height:22px;stroke:var(--light)}
+/* ── back button ── */
+.bback{display:inline-flex;align-items:center;gap:6px;font-family:'Century Gothic','CenturyGothic','Nunito',sans-serif;font-size:12px;font-weight:700;color:var(--muted);background:none;border:none;cursor:pointer;padding:0;margin-bottom:20px;transition:color .2s,gap .2s}
+.bback:hover{color:var(--navy);gap:10px}
+.bback svg{width:14px;height:14px;stroke:currentColor}
+/* ── tax section ── */
+.tsec{font-size:15px;font-weight:800;color:var(--navy);margin:28px 0 14px;display:flex;align-items:center;gap:10px}
+.tsec::after{content:'';flex:1;height:1px;background:var(--border)}
+.tbadge{display:inline-flex;align-items:center;background:#edf1ff;color:var(--blue);font-size:10px;font-weight:800;letter-spacing:.08em;padding:3px 10px;border-radius:100px;text-transform:uppercase}
+.yrow{display:flex;gap:16px;margin-bottom:10px}
+.yrow .fld{max-width:200px}
+.tscroll{overflow-x:auto;margin-bottom:10px}
+/* ── tax table ── */
+table.ttbl{width:100%;border-collapse:collapse;font-size:12.5px}
+table.ttbl th,table.ttbl td{border:1px solid var(--border);padding:8px 10px;text-align:right}
+table.ttbl th{background:var(--navy);color:var(--white);font-size:11px;font-weight:700;letter-spacing:.06em;text-transform:uppercase}
+table.ttbl th:first-child,table.ttbl td:first-child{text-align:left;min-width:190px;background:#f0f4ff;font-weight:700;color:var(--navy)}
+table.ttbl tr:nth-child(even) td{background:#f8faff}
+table.ttbl tr:nth-child(even) td:first-child{background:#edf2ff}
+/* ── tax cell inputs ── */
+table.ttbl td.inp-cell{padding:4px 8px}
+table.ttbl td.inp-cell input{
+  display:block;width:100%;min-width:80px;
+  background:#f4f7ff;
+  border:1.5px solid var(--border);
+  border-radius:6px;
+  padding:5px 8px;
+  text-align:right;
+  font-size:12px;
+  font-family:'Century Gothic','CenturyGothic','Nunito',sans-serif;
+  font-weight:600;color:var(--navy);outline:none;
+  transition:border-color .2s,background .2s;
+  -moz-appearance:textfield;
+}
+table.ttbl td.inp-cell input::-webkit-outer-spin-button,
+table.ttbl td.inp-cell input::-webkit-inner-spin-button{-webkit-appearance:none}
+table.ttbl td.inp-cell input:focus{background:#fff;border-color:var(--blue);box-shadow:0 0 0 2px rgba(0,10,249,.1)}
+table.ttbl td.inp-cell input::placeholder{color:#c5d3f0;font-weight:400}
+/* RED invalid for tax cell inputs */
+table.ttbl td.inp-cell input.invalid{
+  border:2px solid #e53e3e !important;
+  background:#fff0f0 !important;
+  color:#c0392b !important;
+  box-shadow:0 0 0 2px rgba(229,62,62,.2) !important;
+}
+table.ttbl td.inp-cell .errmsg{font-size:9px;color:#e53e3e;font-weight:700;display:none;margin-top:2px}
+table.ttbl td.inp-cell .errmsg.show{display:block}
+/* total / net rows */
+tr.trow td{background:#edf1ff !important;font-weight:800;color:var(--navy)}
+tr.trow td:first-child{background:#dde6ff !important}
+tr.nrow td{background:var(--navy) !important;color:var(--white) !important;font-weight:800}
+tr.nrow td:first-child{background:#1e1775 !important;color:var(--light) !important}
+tr.nrow td.pos{color:#7fffb0 !important}
+tr.nrow td.neg{color:#ff9090 !important}
+/* ── export button ── */
+.tax-acts{display:flex;gap:12px;flex-wrap:wrap;margin-top:6px}
+.bexp{display:inline-flex;align-items:center;gap:8px;font-family:'Century Gothic','CenturyGothic','Nunito',sans-serif;font-size:13px;font-weight:800;letter-spacing:.06em;text-transform:uppercase;color:var(--white);background:#1a7a4a;border:none;border-radius:10px;padding:12px 22px;cursor:pointer;transition:background .2s,transform .2s,box-shadow .2s}
+.bexp:hover{background:#15613b;transform:translateY(-2px);box-shadow:0 6px 20px rgba(0,100,60,.25)}
+.bexp svg{width:16px;height:16px;stroke:currentColor}
+.footer{text-align:center;margin-top:44px;font-size:11px;color:var(--muted);opacity:.5;letter-spacing:.06em}
+</style>
+</head>
+<body>
+<div class="pw">
+<header>
+    <img src="https://img1.wsimg.com/isteam/ip/5d9ea9ac-1316-46e6-9fc9-1799679168d0/all%20freight%20logo%20transparent.png/:/rs=h:175,m"
+     alt="All Freight Logo"
+     style="display:block;margin:0 auto 25px;max-width:80px;">
+    <h1>All Freight</h1>
+    <p class="sub" id="mainSub">Select a calculation type to get started</p>
+  </header>
+<!-- mode selector -->
+<div class="ms" id="modeSel">
+  <button class="mb" onclick="openPanel('Vol')">
+    <div class="mi"><svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 16V8a2 2 0 0 0-1-1.73L13 2.27a2 2 0 0 0-2 0L4 6.27A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"/><polyline points="3.27 6.96 12 12.01 20.73 6.96"/><line x1="12" y1="22.08" x2="12" y2="12"/></svg></div>
+    <div class="mtl">Volumetric Weight</div>
+    <div class="mds">Calculate from dimensions<br/>&amp; quantity</div>
+    <div class="mar"><svg viewBox="0 0 24 24" fill="none" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"/></svg></div>
+  </button>
+  <button class="mb" onclick="openPanel('Wt')">
+    <div class="mi"><svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="5" r="3"/><path d="M6.5 8a2 2 0 0 0-1.905 1.46L2.1 18.5A2 2 0 0 0 4 21h16a2 2 0 0 0 1.925-2.54L19.4 9.46A2 2 0 0 0 17.5 8Z"/></svg></div>
+    <div class="mtl">Actual Weight</div>
+    <div class="mds">Sum multiple item weights<br/>into a total</div>
+    <div class="mar"><svg viewBox="0 0 24 24" fill="none" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"/></svg></div>
+  </button>
+  <button class="mb" onclick="openPanel('Tax')">
+    <div class="mi"><svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="3" width="20" height="14" rx="2"/><line x1="8" y1="21" x2="16" y2="21"/><line x1="12" y1="17" x2="12" y2="21"/><line x1="6" y1="8" x2="10" y2="8"/><line x1="6" y1="12" x2="18" y2="12"/><line x1="14" y1="8" x2="18" y2="8"/></svg></div>
+    <div class="mtl">Tax Calculation</div>
+    <div class="mds">Inbound &amp; outbound<br/>quarterly </div>
+    <div class="mar"><svg viewBox="0 0 24 24" fill="none" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"/></svg></div>
+  </button>
+</div>
+<!-- ═══════════ PANEL: VOLUME ═══════════ -->
+<div class="panel" id="panelVol">
+  <button class="bback" onclick="closePanel()"><svg viewBox="0 0 24 24" fill="none" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"/></svg>Back to menu</button>
+  <div class="card">
+    <div class="chead">
+      <div class="cicon"><svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 16V8a2 2 0 0 0-1-1.73L13 2.27a2 2 0 0 0-2 0L4 6.27A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"/><polyline points="3.27 6.96 12 12.01 20.73 6.96"/><line x1="12" y1="22.08" x2="12" y2="12"/></svg></div>
+      <div><div class="ctitle">Volumetric Weight</div><div class="csub">Enter dimensions and quantity below</div></div>
+    </div>
+    <div class="fpill">V = ((L × W × H) ÷ 366) × QTY</div>
+    <div class="igrid fcols">
+      <div class="fld">
+        <label for="vQty">Quantity</label>
+        <input type="number" id="vQty" min="0" step="1" value="1"/>
+        <span class="errmsg" id="err_vQty">Enter a valid number</span>
+      </div>
+      <div class="fld">
+        <label for="vLen">Length (cm)</label>
+        <input type="number" id="vLen" min="0" step="0.01" />
+        <span class="errmsg" id="err_vLen">Enter a valid number</span>
+      </div>
+      <div class="fld">
+        <label for="vWid">Width (cm)</label>
+        <input type="number" id="vWid" min="0" step="0.01" />
+        <span class="errmsg" id="err_vWid">Enter a valid number</span>
+      </div>
+      <div class="fld">
+        <label for="vHgt">Height (cm)</label>
+        <input type="number" id="vHgt" min="0" step="0.01" />
+        <span class="errmsg" id="err_vHgt">Enter a valid number</span>
+      </div>
+    </div>
+    <div class="hdiv"></div>
+    <button class="bcalc" onclick="calcVol()"><svg viewBox="0 0 24 24" fill="none" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>Calculate Volume</button>
+    <div class="rbox" id="rbVol">
+      <div><div class="rlbl">Volumetric Weight</div><div class="rval" id="rvVol">—</div><div class="runit">kg (volumetric / CBM)</div></div>
+      <div class="rchk"><svg viewBox="0 0 24 24" fill="none" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg></div>
+    </div>
+  </div>
+</div>
+<!-- ═══════════ PANEL: WEIGHT ═══════════ -->
+<div class="panel" id="panelWt">
+  <button class="bback" onclick="closePanel()"><svg viewBox="0 0 24 24" fill="none" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"/></svg>Back to menu</button>
+  <div class="card">
+    <div class="chead">
+      <div class="cicon"><svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="5" r="3"/><path d="M6.5 8a2 2 0 0 0-1.905 1.46L2.1 18.5A2 2 0 0 0 4 21h16a2 2 0 0 0 1.925-2.54L19.4 9.46A2 2 0 0 0 17.5 8Z"/></svg></div>
+      <div><div class="ctitle">Total Actual Weight</div><div class="csub">Enter each item's weight — blank fields are counted as 0</div></div>
+    </div>
+    <div class="fpill">W<sub>total</sub> = W<sub>1</sub> + W<sub>2</sub> + … + W<sub>n</sub></div>
+    <div class="whead">
+      <span style="font-size:12px;font-weight:700;color:var(--muted)">Weight Entries</span>
+      <span class="wbadge" id="wBadge">10 items</span>
+    </div>
+    <div class="wlist" id="wList"></div>
+    <button class="badd" onclick="addWRow()">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" width="14" height="14"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+      Add Weight Field
+    </button>
+    <div class="hdiv"></div>
+    <button class="bcalc" onclick="calcWt()"><svg viewBox="0 0 24 24" fill="none" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>Calculate Total Weight</button>
+    <div class="rbox" id="rbWt">
+      <div><div class="rlbl">Total Actual Weight</div><div class="rval" id="rvWt">—</div><div class="runit">kg (actual combined)</div></div>
+      <div class="rchk"><svg viewBox="0 0 24 24" fill="none" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg></div>
+    </div>
+  </div>
+</div>
+<!-- ═══════════ PANEL: TAX ═══════════ -->
+<div class="panel" id="panelTax">
+  <button class="bback" onclick="closePanel()"><svg viewBox="0 0 24 24" fill="none" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"/></svg>Back to menu</button>
+  <div class="card">
+    <div class="chead">
+      <div class="cicon"><svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="3" width="20" height="14" rx="2"/><line x1="8" y1="21" x2="16" y2="21"/><line x1="12" y1="17" x2="12" y2="21"/></svg></div>
+      <div><div class="ctitle">Tax Calculation</div><div class="csub">Fill in quarterly inbound &amp; outbound figures</div></div>
+    </div>
+    <div class="yrow">
+      <div class="fld">
+        <label for="tYear">Tax Year</label>
+        <input type="text" id="tYear" placeholder="e.g. 2024" maxlength="4" style="max-width:160px"/>
+        <span class="errmsg" id="err_tYear">Please enter a valid 4-digit year</span>
+      </div>
+    </div>
+    <div class="hdiv"></div>
+    <div class="tsec"><span class="tbadge">Table 1</span> Inbound Revenue</div>
+    <div class="tscroll"><table class="ttbl" id="tInb"><thead><tr><th>Category</th><th>1st Quarter</th><th>2nd Quarter</th><th>3rd Quarter</th><th>4th Quarter</th><th>Total</th></tr></thead><tbody id="tbInb"></tbody></table></div>
+    <div class="hdiv"></div>
+    <div class="tsec"><span class="tbadge">Table 2</span> Outbound Expenses</div>
+    <div class="tscroll"><table class="ttbl" id="tOut"><thead><tr><th>Category</th><th>1st Quarter</th><th>2nd Quarter</th><th>3rd Quarter</th><th>4th Quarter</th><th>Total</th></tr></thead><tbody id="tbOut"></tbody></table></div>
+    <div class="hdiv"></div>
+    <div class="tsec"><span class="tbadge" style="background:#e8f7f0;color:#1a7a4a">Summary</span> Net Profit / Loss</div>
+    <div class="tscroll"><table class="ttbl" id="tSum"><thead><tr><th>Item</th><th>1st Quarter</th><th>2nd Quarter</th><th>3rd Quarter</th><th>4th Quarter</th><th>Annual Total</th></tr></thead><tbody id="tbSum"></tbody></table></div>
+    <div class="hdiv"></div>
+    <div class="tax-acts">
+      <button class="bcalc" onclick="calcTax()" style="width:auto;padding:14px 28px"><svg viewBox="0 0 24 24" fill="none" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>Calculate</button>
+      <button class="bexp" onclick="exportPDF()"><svg viewBox="0 0 24 24" fill="none" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="12" y1="18" x2="12" y2="12"/><polyline points="9 15 12 18 15 15"/></svg>Export as PDF</button>
+    </div>
+  </div>
+</div>
+<p class="footer">Dimensions in inches · Weights in kilograms · Amounts in USD</p>
+</div><!-- end .pw -->
+<script>
+/* ════════════════════════════════════════
+   NAVIGATION
+════════════════════════════════════════ */
+function openPanel(t){
+  document.getElementById('modeSel').style.display='none';
+  document.getElementById('mainSub').classList.add('gone');
+  ['Vol','Wt','Tax'].forEach(x=>{ const p=document.getElementById('panel'+x); p.classList.remove('on'); });
+  document.getElementById('panel'+t).classList.add('on');
+}
+function closePanel(){
+  document.getElementById('modeSel').style.display='grid';
+  document.getElementById('mainSub').classList.remove('gone');
+  ['Vol','Wt','Tax'].forEach(x=>document.getElementById('panel'+x).classList.remove('on'));
+}
+/* ════════════════════════════════════════
+   VALIDATION HELPERS
+════════════════════════════════════════ */
+function isValidNum(v){ return v.trim()!=='' && !isNaN(Number(v)) && Number(v)>=0; }
+function markBad(el){
+  el.classList.add('invalid');
+  const msg=document.getElementById('err_'+el.id);
+  if(msg) msg.classList.add('show');
+}
+function markOK(el){
+  el.classList.remove('invalid');
+  const msg=document.getElementById('err_'+el.id);
+  if(msg) msg.classList.remove('show');
+}
+// Clear red on focus for any input
+document.addEventListener('focusin', function(e){
+  if(e.target.tagName==='INPUT'){
+    e.target.classList.remove('invalid');
+    if(e.target.id){ const m=document.getElementById('err_'+e.target.id); if(m)m.classList.remove('show'); }
+  }
+});
+/* ════════════════════════════════════════
+   VOLUME CALCULATOR
+════════════════════════════════════════ */
+function calcVol(){
+  const ids=['vQty','vLen','vWid','vHgt'];
+  let ok=true;
+  ids.forEach(id=>{
+    const el=document.getElementById(id);
+    if(!isValidNum(el.value)){ markBad(el); ok=false; } else markOK(el);
+  });
+  if(!ok) return;
+  const q=+document.getElementById('vQty').value;
+  const l=+document.getElementById('vLen').value;
+  const w=+document.getElementById('vWid').value;
+  const h=+document.getElementById('vHgt').value;
+  document.getElementById('rvVol').textContent=(((l*w*h)/366)*q).toFixed(4);
+  popResult('rbVol');
+}
+/* ════════════════════════════════════════
+   WEIGHT LIST MANAGEMENT
+════════════════════════════════════════ */
+let wCount=0;
+function addWRow(init=false){
+  wCount++;
+  const list=document.getElementById('wList');
+  const row=document.createElement('div');
+  row.className='wrow'; row.id='wrow'+wCount;
+  const idx=document.createElement('span');
+  idx.className='widx'; idx.textContent=String(wCount).padStart(2,'0');
+  const inp=document.createElement('input');
+  inp.type='number'; inp.min='0'; inp.step='0.001';
+  inp.placeholder='0.000'; inp.id='winp'+wCount;
+  const errSpan=document.createElement('span');
+  errSpan.className='errmsg'; errSpan.id='err_winp'+wCount;
+  errSpan.textContent='Enter a valid number';
+  const btn=document.createElement('button');
+  btn.className='brem'; btn.innerHTML='&times;'; btn.title='Remove';
+  const cid=wCount;
+  btn.onclick=()=>removeWRow(cid);
+  row.append(idx,inp,btn,errSpan);
+  list.appendChild(row);
+  updateWBadge(); updateWRemove();
+  if(!init) inp.focus();
+}
+function removeWRow(id){
+  const r=document.getElementById('wrow'+id); if(!r)return;
+  r.style.transition='opacity .18s,transform .18s';
+  r.style.opacity='0'; r.style.transform='translateX(12px)';
+  setTimeout(()=>{ r.remove(); reIndexW(); updateWBadge(); updateWRemove(); },180);
+}
+function reIndexW(){ document.querySelectorAll('.wrow').forEach((r,i)=>{ const s=r.querySelector('.widx'); if(s)s.textContent=String(i+1).padStart(2,'0'); }); }
+function updateWRemove(){ const bs=document.querySelectorAll('#wList .brem'); bs.forEach(b=>b.disabled=bs.length<=1); }
+function updateWBadge(){ const n=document.querySelectorAll('#wList .wrow').length; document.getElementById('wBadge').textContent=n+' item'+(n!==1?'s':''); }
+for(let i=0;i<10;i++) addWRow(true);
+/* ════════════════════════════════════════
+   WEIGHT CALCULATOR
+   — blank = 0 (no error)
+   — non-numeric / negative = RED, block result
+════════════════════════════════════════ */
+function calcWt(){
+  const inputs=document.querySelectorAll('#wList .wrow input[type=number]');
+  let total=0, anyBad=false;
+  inputs.forEach(inp=>{
+    markOK(inp); // reset first
+    if(inp.value.trim()===''){
+      // blank → treat as zero, no complaint
+      return;
+    }
+    const v=Number(inp.value);
+    if(isNaN(v) || v<0){
+      markBad(inp); // ← RED + error message
+      anyBad=true;
+    } else {
+      total+=v;
+    }
+  });
+  if(anyBad) return; // stop — let user fix red fields
+  document.getElementById('rvWt').textContent=total.toFixed(3);
+  popResult('rbWt');
+}
+/* ════════════════════════════════════════
+   TAX TABLES — DATA
+════════════════════════════════════════ */
+const INB_ROWS=['Tickets In','Air Cargo In','Sea Cargo In','Car Insurance In','Trucking In','Miscellaneous'];
+const OUT_ROWS=['Tickets Paid','Air Cargo Paid','Sea Cargo Paid','Car Insurance Paid','Trucking Paid','Telephone','Internet','Health Insurance','Mortgage / Utilities','Meals','Travel','Advertisement','Stationary / FedEx / Postage','Misc. Parking / Gifts / Car Wash','Bank Fees','Sub Contractor / Services'];
+function buildTaxTable(tbodyId, rows, pfx){
+  const tb=document.getElementById(tbodyId); tb.innerHTML='';
+  rows.forEach((lbl,ri)=>{
+    const tr=document.createElement('tr');
+    let h=`<td>${lbl}</td>`;
+    for(let q=1;q<=4;q++){
+      h+=`<td class="inp-cell"><input type="number" min="0" step="0.01" placeholder="0.00"
+           id="${pfx}_r${ri}_q${q}" oninput="liveCalc('${pfx}',${rows.length})"/>
+           <span class="errmsg" id="err_${pfx}_r${ri}_q${q}">Enter a valid number</span></td>`;
+    }
+    h+=`<td id="${pfx}_r${ri}_tot" style="font-weight:800">0.00</td>`;
+    tr.innerHTML=h; tb.appendChild(tr);
+  });
+  // total footer row
+  const ft=document.createElement('tr'); ft.className='trow';
+  let fh='<td>TOTAL</td>';
+  for(let q=1;q<=4;q++) fh+=`<td id="${pfx}_c${q}_tot">0.00</td>`;
+  fh+=`<td id="${pfx}_grand">0.00</td>`;
+  ft.innerHTML=fh; tb.appendChild(ft);
+}
+function liveCalc(pfx,n){
+  const ct=[0,0,0,0];
+  for(let ri=0;ri<n;ri++){
+    let rt=0;
+    for(let q=1;q<=4;q++){
+      const el=document.getElementById(`${pfx}_r${ri}_q${q}`);
+      const v=parseFloat(el?el.value:0)||0;
+      rt+=v; ct[q-1]+=v;
+    }
+    const t=document.getElementById(`${pfx}_r${ri}_tot`); if(t)t.textContent=fmtN(rt);
+  }
+  let g=0;
+  for(let q=1;q<=4;q++){
+    const c=document.getElementById(`${pfx}_c${q}_tot`); if(c)c.textContent=fmtN(ct[q-1]);
+    g+=ct[q-1];
+  }
+  const gr=document.getElementById(`${pfx}_grand`); if(gr)gr.textContent=fmtN(g);
+  buildSummary();
+}
+function buildSummary(){
+  const cIn=[1,2,3,4].map(q=>parseFloat(document.getElementById(`inb_c${q}_tot`)?.textContent)||0);
+  const cOut=[1,2,3,4].map(q=>parseFloat(document.getElementById(`out_c${q}_tot`)?.textContent)||0);
+  const gIn=parseFloat(document.getElementById('inb_grand')?.textContent)||0;
+  const gOut=parseFloat(document.getElementById('out_grand')?.textContent)||0;
+  const tb=document.getElementById('tbSum'); tb.innerHTML='';
+  let rIn=`<tr><td style="font-weight:800">Total Inbound</td>`;
+  cIn.forEach(v=>rIn+=`<td style="font-weight:700">${fmtN(v)}</td>`);
+  rIn+=`<td style="font-weight:800">${fmtN(gIn)}</td></tr>`;
+  let rOut=`<tr><td style="font-weight:800">Total Outbound</td>`;
+  cOut.forEach(v=>rOut+=`<td style="font-weight:700">${fmtN(v)}</td>`);
+  rOut+=`<td style="font-weight:800">${fmtN(gOut)}</td></tr>`;
+  let rNet='<tr class="nrow"><td>Net Profit / Loss</td>';
+  let gNet=0;
+  for(let i=0;i<4;i++){
+    const n=cIn[i]-cOut[i]; gNet+=n;
+    rNet+=`<td class="${n>=0?'pos':'neg'}">${n>=0?'+':''}${fmtN(n)}</td>`;
+  }
+  rNet+=`<td class="${gNet>=0?'pos':'neg'}">${gNet>=0?'+':''}${fmtN(gNet)}</td></tr>`;
+  tb.innerHTML=rIn+rOut+rNet;
+}
+function fmtN(v){ return v.toLocaleString('en-US',{minimumFractionDigits:2,maximumFractionDigits:2}); }
+/* ════════════════════════════════════════
+   TAX CALCULATE BUTTON
+   — validate year
+   — validate table inputs (non-numeric/negative = RED, block)
+   — blank = 0, no error
+════════════════════════════════════════ */
+function calcTax(){
+  // 1. Year
+  const yearEl=document.getElementById('tYear');
+  const yr=yearEl.value.trim();
+  if(!yr||!/^\d{4}$/.test(yr)){ markBad(yearEl); return; } else markOK(yearEl);
+  // 2. Validate all table inputs
+  const allTaxInputs=document.querySelectorAll('#tbInb input[type=number], #tbOut input[type=number]');
+  let anyBad=false;
+  allTaxInputs.forEach(inp=>{
+    markOK(inp);
+    if(inp.value.trim()==='') return; // blank = 0, ok
+    const v=Number(inp.value);
+    if(isNaN(v)||v<0){ markBad(inp); anyBad=true; }
+  });
+  if(anyBad) return;
+  // 3. Recalc and show summary
+  liveCalc('inb',INB_ROWS.length);
+  liveCalc('out',OUT_ROWS.length);
+  buildSummary();
+  setTimeout(()=>document.getElementById('tSum').scrollIntoView({behavior:'smooth',block:'start'}),80);
+}
+/* ════════════════════════════════════════
+   SHOW RESULT ANIMATION
+════════════════════════════════════════ */
+function popResult(id){
+  const b=document.getElementById(id);
+  b.classList.remove('show'); void b.offsetWidth; b.classList.add('show');
+  setTimeout(()=>b.scrollIntoView({behavior:'smooth',block:'nearest'}),50);
+}
+/* ════════════════════════════════════════
+   PDF EXPORT
+   Uses Blob + iframe print — NO popup needed,
+   NO external libraries, works in all browsers.
+════════════════════════════════════════ */
+function exportPDF(){
+  const yearEl=document.getElementById('tYear');
+  const yr=yearEl.value.trim();
+  if(!yr||!/^\d{4}$/.test(yr)){ markBad(yearEl); return; } else markOK(yearEl);
+  // Ensure fresh calc
+  liveCalc('inb',INB_ROWS.length);
+  liveCalc('out',OUT_ROWS.length);
+  buildSummary();
+  // ── Collect table data ──
+  function getTableData(pfx, rows){
+    return rows.map((lbl,ri)=>{
+      const cells=[lbl];
+      for(let q=1;q<=4;q++){
+        const el=document.getElementById(`${pfx}_r${ri}_q${q}`);
+        cells.push(parseFloat(el?el.value:0)||0);
+      }
+      cells.push(parseFloat(document.getElementById(`${pfx}_r${ri}_tot`)?.textContent)||0);
+      return cells;
+    });
+  }
+  function getTotalRow(pfx){
+    const r=['TOTAL'];
+    for(let q=1;q<=4;q++) r.push(parseFloat(document.getElementById(`${pfx}_c${q}_tot`)?.textContent)||0);
+    r.push(parseFloat(document.getElementById(`${pfx}_grand`)?.textContent)||0);
+    return r;
+  }
+  function getSummaryRows(){
+    return Array.from(document.getElementById('tbSum').rows)
+      .map(tr=>Array.from(tr.cells).map(td=>td.textContent.trim()));
+  }
+  const inbData=[...getTableData('inb',INB_ROWS), getTotalRow('inb')];
+  const outData=[...getTableData('out',OUT_ROWS), getTotalRow('out')];
+  const sumData=getSummaryRows();
+  function fc(v){ return typeof v==='number'?fmtN(v):v; }
+  // ── Build HTML rows ──
+  const TH='background:#150F4D;color:#fff;padding:5px 7px;font-size:7.5pt;border:1px solid #8899cc;text-align:right;font-weight:700;letter-spacing:.04em';
+  const TH0=TH+';text-align:left';
+  function headRow(cols){ return '<tr>'+cols.map((c,i)=>`<th style="${i===0?TH0:TH}">${c}</th>`).join('')+'</tr>'; }
+  function dataRows(rows, isSum){
+    return rows.map((row,ri)=>{
+      const isTot=!isSum&&ri===rows.length-1;
+      const isNet=isSum&&ri===2;
+      return '<tr>'+row.map((cell,ci)=>{
+        let bg=isTot?(ci===0?'#c8d7ff':'#dde6ff'):'';
+        let color='#150F4D', fw=isTot?'700':'500';
+        if(isNet){ bg=ci===0?'#1e1775':'#150F4D'; color=ci===0?'#A7C6FF':'#fff'; fw='800';
+          const s=String(cell);
+          if(ci>0&&s.startsWith('+')) color='#7fffb0';
+          if(ci>0&&s.startsWith('-')) color='#ff9090';
+        }
+        const align=ci===0?'left':'right';
+        const style=`padding:4px 7px;font-size:7.2pt;border:1px solid #ccd5ee;text-align:${align};background:${bg};color:${color};font-weight:${fw}`;
+        return `<td style="${style}">${fc(cell)}</td>`;
+      }).join('')+'</tr>';
+    }).join('');
+  }
+  const HEADS=['Category','Quarter 1','Quarter 2','Quarter 3','Quarter 4','Total'];
+  const SHEADS=['Item','Quarter 1','Quarter 2','Quarter 3','Quarter 4','Annual Total'];
+  // ── Full PDF HTML ──
+  const pdfHTML=`<!DOCTYPE html>
+<html><head><meta charset="UTF-8">
+<title>All Freight Tax ${yr}</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:Arial,sans-serif;background:#fff;color:#150F4D}
+.page{width:277mm;padding:8mm 10mm}
+h1{font-size:20pt;color:#000AF9;text-align:center;margin-bottom:2px;font-weight:800}
+.info{font-size:8.5pt;text-align:center;margin-bottom:2px;color:#150F4D}
+.info.bold{font-weight:700}
+.line{height:1.5px;background:#150F4D;margin:5px auto 8px;width:65%}
+h2{font-size:10pt;font-weight:800;color:#150F4D;margin:8px 0 3px;text-transform:uppercase;letter-spacing:.05em}
+table{width:100%;border-collapse:collapse;margin-bottom:4px}
+@page{size:A4 landscape;margin:0}
+@media print{html,body{width:297mm}body{-webkit-print-color-adjust:exact;print-color-adjust:exact}}
+</style>
+</head>
+<body>
+<div class="page">
+<img src="https://img1.wsimg.com/isteam/ip/5d9ea9ac-1316-46e6-9fc9-1799679168d0/all%20freight%20logo%20transparent.png/:/rs=h:175,m"
+     alt="All Freight Logo"
+     style="display:block;margin:0 auto 25px;max-width:80px;">
+<h1>All Freight</h1>
+<p class="info">Shipping &amp; Cargo</p>
+<p class="info">2840 Gunarette Way</p>
+<p class="info">Silver Spring, MD 20906</p>
+
+<p class="info">Tel (301) 598-0117 &nbsp;&nbsp;&nbsp; Fax (301) 598-0095</p>
+<p class="info bold">Year: ${yr}</p>
+
+
+<h2>Table 1 — Inbound Revenue</h2>
+<table><thead>${headRow(HEADS)}</thead><tbody>${dataRows(inbData,false)}</tbody></table>
+<h2>Table 2 — Outbound Expenses</h2>
+<table><thead>${headRow(HEADS)}</thead><tbody>${dataRows(outData,false)}</tbody></table>
+<h2>Net Profit</h2>
+<table><thead>${headRow(SHEADS)}</thead><tbody>${dataRows(sumData,true)}</tbody></table>
+</div>
+<div class="page">
+<p class="info">Amounts in USD</p>
+</div>
+</body></html>`;
+  // ── Trigger print via hidden iframe (no popup blocker issues) ──
+  const iframe=document.createElement('iframe');
+  iframe.style.cssText='position:fixed;top:-9999px;left:-9999px;width:0;height:0;border:none';
+  document.body.appendChild(iframe);
+  iframe.contentDocument.open();
+  iframe.contentDocument.write(pdfHTML);
+  iframe.contentDocument.close();
+  // Wait for resources then print
+  iframe.contentWindow.onload=function(){
+    try{
+      iframe.contentWindow.focus();
+      iframe.contentWindow.print();
+    }catch(e){}
+    setTimeout(()=>{ try{document.body.removeChild(iframe);}catch(e){} },3000);
+  };
+ 
+}
+/* ════════════════════════════════════════
+   INIT
+════════════════════════════════════════ */
+buildTaxTable('tbInb', INB_ROWS, 'inb');
+buildTaxTable('tbOut', OUT_ROWS, 'out');
+document.addEventListener('keydown', e=>{
+  if(e.key!=='Enter') return;
+  if(document.getElementById('panelVol').classList.contains('on')) calcVol();
+  else if(document.getElementById('panelWt').classList.contains('on')) calcWt();
+  else if(document.getElementById('panelTax').classList.contains('on')) calcTax();
+});
+</script>
+</body>
+</html>
